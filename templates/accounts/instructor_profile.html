@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ instructor.get_full_name|default:instructor.username }} - Instructor{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body text-center">
+                    {% if instructor.profile_picture %}
+                        <img src="{{ instructor.profile_picture.url }}" alt="{{ instructor.username }}" 
+                             class="rounded-circle mb-3" style="width: 150px; height: 150px; object-fit: cover;">
+                    {% else %}
+                        <div class="rounded-circle bg-secondary d-inline-flex align-items-center justify-content-center mb-3" 
+                             style="width: 150px; height: 150px;">
+                            <i class="bi bi-person-circle text-white" style="font-size: 100px;"></i>
+                        </div>
+                    {% endif %}
+                    <h3>{{ instructor.get_full_name|default:instructor.username }}</h3>
+                    <p class="text-muted">@{{ instructor.username }}</p>
+                    <span class="badge bg-primary">Instructor</span>
+                </div>
+            </div>
+            
+            {% if instructor.bio %}
+                <div class="card mt-3">
+                    <div class="card-body">
+                        <h5>About</h5>
+                        <p>{{ instructor.bio }}</p>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+        
+        <div class="col-md-8">
+            <h2 class="mb-4">Courses by {{ instructor.get_full_name|default:instructor.username }}</h2>
+            
+            {% if instructor.courses.exists %}
+                <div class="row g-4">
+                    {% for course in instructor.courses.all %}
+                        {% if course.status == 'published' %}
+                            <div class="col-md-6">
+                                <div class="card course-card h-100">
+                                    {% if course.thumbnail %}
+                                        <img src="{{ course.thumbnail.url }}" class="card-img-top course-card-img" alt="{{ course.title }}">
+                                    {% endif %}
+                                    <div class="card-body">
+                                        <h5 class="card-title">{{ course.title }}</h5>
+                                        <p class="card-text">{{ course.short_description|truncatewords:15 }}</p>
+                                        <div class="course-meta">
+                                            <span class="course-rating"><i class="bi bi-star-fill"></i> {{ course.rating|floatformat:1 }}</span>
+                                            <span class="course-enrollments"><i class="bi bi-people"></i> {{ course.total_enrollments }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="card-footer bg-transparent">
+                                        <a href="{% url 'courses:course_detail' course.slug %}" class="btn btn-primary w-100">View Course</a>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="alert alert-info">
+                    This instructor hasn't created any courses yet.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+

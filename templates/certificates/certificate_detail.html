@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Certificate - {{ certificate.course.title }}{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="certificate-container">
+                <h1 class="display-3 mb-4">Certificate of Completion</h1>
+                <p class="lead mb-4">This is to certify that</p>
+                <h2 class="display-4 mb-4">{{ certificate.user.get_full_name|default:certificate.user.username }}</h2>
+                <p class="lead mb-4">has successfully completed the course</p>
+                <h3 class="display-5 mb-4">{{ certificate.course.title }}</h3>
+                <p class="mb-4">Certificate Number: <strong>{{ certificate.certificate_number }}</strong></p>
+                <p class="mb-4">Issued on: {{ certificate.issued_at|date:"F d, Y" }}</p>
+                <div class="mt-5">
+                    <button onclick="window.print()" class="btn btn-light btn-lg">Print Certificate</button>
+                    <a href="{% url 'certificates:my_certificates' %}" class="btn btn-outline-light btn-lg">Back to Certificates</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+@media print {
+    .navbar, footer, .btn {
+        display: none;
+    }
+}
+</style>
+{% endblock %}
+

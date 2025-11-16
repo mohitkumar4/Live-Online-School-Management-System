@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ discussion.title }}{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'courses:course_list' %}">Courses</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'courses:course_detail' discussion.course.slug %}">{{ discussion.course.title }}</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'forum:discussion_list' discussion.course.slug %}">Discussions</a></li>
+            <li class="breadcrumb-item active">{{ discussion.title }}</li>
+        </ol>
+    </nav>
+
+    <!-- Main Discussion -->
+    <div class="discussion-card mb-4">
+        <div class="d-flex justify-content-between align-items-start mb-3">
+            <div>
+                {% if discussion.is_pinned %}
+                    <span class="badge bg-warning">Pinned</span>
+                {% endif %}
+                <h2>{{ discussion.title }}</h2>
+            </div>
+            <small class="text-muted">{{ discussion.created_at|date:"M d, Y h:i A" }}</small>
+        </div>
+        <div class="mb-3">
+            <p>{{ discussion.content|linebreaks }}</p>
+        </div>
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <small class="text-muted">
+                    <i class="bi bi-person"></i> {{ discussion.user.get_full_name|default:discussion.user.username }}
+                    | <i class="bi bi-eye"></i> {{ discussion.views }} views
+                </small>
+            </div>
+            <a href="{% url 'courses:course_detail' discussion.course.slug %}" class="btn btn-sm btn-outline-secondary">
+                Back to Course
+            </a>
+        </div>
+    </div>
+
+    <!-- Replies -->
+    <h3 class="mb-3">Replies ({{ replies.count }})</h3>
+    {% for reply in replies %}
+        <div class="reply-card {% if reply.is_answer %}reply-answer{% endif %} mb-3">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+                <strong>{{ reply.user.get_full_name|default:reply.user.username }}</strong>
+                {% if reply.is_answer %}
+                    <span class="badge bg-success">Best Answer</span>
+                {% endif %}
+            </div>
+            <p class="mb-2">{{ reply.content|linebreaks }}</p>
+            <div class="d-flex justify-content-between align-items-center">
+                <small class="text-muted">{{ reply.created_at|date:"M d, Y h:i A" }}</small>
+                {% if is_enrolled and not reply.is_answer %}
+                    {% if discussion.course.instructor == user or discussion.user == user %}
+                        <a href="{% url 'forum:mark_as_answer' reply.id %}" class="btn btn-sm btn-success">
+                            Mark as Answer
+                        </a>
+                    {% endif %}
+                {% endif %}
+            </div>
+        </div>
+    {% empty %}
+        <p class="text-muted">No replies yet. Be the first to reply!</p>
+    {% endfor %}
+
+    <!-- Reply Form -->
+    {% if is_enrolled %}
+        <div class="card mt-4">
+            <div class="card-header">
+                <h4>Post a Reply</h4>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        {{ form.content }}
+                    </div>
+                    <button type="submit" class="btn btn-primary">Post Reply</button>
+                </form>
+            </div>
+        </div>
+    {% else %}
+        <div class="alert alert-info mt-4">
+            You must be enrolled in this course to post replies.
+            <a href="{% url 'enrollments:enroll' discussion.course.slug %}" class="btn btn-sm btn-primary">Enroll Now</a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+

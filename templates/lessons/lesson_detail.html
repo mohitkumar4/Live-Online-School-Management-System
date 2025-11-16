@@ -1,0 +1,155 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ lesson.title }} - {{ course.title }}{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row">
+        <!-- Lesson Sidebar -->
+        <div class="col-md-3">
+            <div class="lesson-sidebar sticky-top" style="top: 80px;">
+                <h5 class="mb-3">Course Content</h5>
+                <div class="list-group list-group-flush">
+                    {% for l in all_lessons %}
+                        <a href="{% url 'lessons:lesson_detail' course_slug=course.slug lesson_slug=l.slug %}" 
+                           class="list-group-item list-group-item-action lesson-item {% if l.id == lesson.id %}active{% endif %}">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <strong>{{ l.title }}</strong>
+                                    {% if l.lesson_type == 'video' %}
+                                        <br><small class="text-muted"><i class="bi bi-play-circle"></i> {{ l.duration_minutes }} min</small>
+                                    {% elif l.lesson_type == 'quiz' %}
+                                        <br><small class="text-muted"><i class="bi bi-question-circle"></i> Quiz</small>
+                                    {% endif %}
+                                </div>
+                                {% if progress and l.id in progress|map:"lesson.id" %}
+                                    <i class="bi bi-check-circle-fill text-success"></i>
+                                {% endif %}
+                            </div>
+                        </a>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Lesson Content -->
+        <div class="col-md-9">
+            <div class="card mb-3">
+                <div class="card-body">
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item"><a href="{% url 'courses:course_detail' course.slug %}">{{ course.title }}</a></li>
+                            <li class="breadcrumb-item active">{{ lesson.title }}</li>
+                        </ol>
+                    </nav>
+                    <h1 class="mb-3">{{ lesson.title }}</h1>
+                    {% if lesson.description %}
+                        <p class="lead">{{ lesson.description }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Video Lesson -->
+            {% if lesson.lesson_type == 'video' %}
+                <div class="video-player-container mb-4">
+                    {% if lesson.video_url %}
+                        {% if 'youtube.com' in lesson.video_url or 'youtu.be' in lesson.video_url %}
+                            {% if 'youtube.com/watch?v=' in lesson.video_url %}
+                                {% with lesson.video_url|split:'='|last as video_id %}
+                                    <iframe class="video-player" src="https://www.youtube.com/embed/{{ video_id }}" frameborder="0" allowfullscreen></iframe>
+                                {% endwith %}
+                            {% else %}
+                                <iframe class="video-player" src="{{ lesson.video_url }}" frameborder="0" allowfullscreen></iframe>
+                            {% endif %}
+                        {% else %}
+                            <video class="video-player" controls>
+                                <source src="{{ lesson.video_url }}" type="video/mp4">
+                                Your browser does not support the video tag.
+                            </video>
+                        {% endif %}
+                    {% elif lesson.video_file %}
+                        <video class="video-player" controls>
+                            <source src="{{ lesson.video_file.url }}" type="video/mp4">
+                            Your browser does not support the video tag.
+                        </video>
+                    {% else %}
+                        <div class="text-center p-5 text-white">
+                            <i class="bi bi-exclamation-triangle" style="font-size: 3rem;"></i>
+                            <p class="mt-3">No video available</p>
+                        </div>
+                    {% endif %}
+                </div>
+            {% endif %}
+
+            <!-- Text Lesson -->
+            {% if lesson.lesson_type == 'text' and lesson.content %}
+                <div class="card mb-4">
+                    <div class="card-body">
+                        {{ lesson.content|linebreaks }}
+                    </div>
+                </div>
+            {% endif %}
+
+            <!-- Quiz Lesson -->
+            {% if lesson.lesson_type == 'quiz' and lesson.quiz %}
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h3>Quiz: {{ lesson.quiz.title }}</h3>
+                        <p>{{ lesson.quiz.description }}</p>
+                        <a href="{% url 'quizzes:quiz_detail' lesson.quiz.id %}" class="btn btn-primary">Take Quiz</a>
+                    </div>
+                </div>
+            {% endif %}
+
+            <!-- Resources -->
+            {% if lesson.resources or lesson.resources_url %}
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h5>Resources</h5>
+                        {% if lesson.resources %}
+                            <a href="{{ lesson.resources.url }}" class="btn btn-outline-primary" download>
+                                <i class="bi bi-download"></i> Download Resource
+                            </a>
+                        {% endif %}
+                        {% if lesson.resources_url %}
+                            <a href="{{ lesson.resources_url }}" class="btn btn-outline-primary" target="_blank">
+                                <i class="bi bi-link-45deg"></i> View Resource
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endif %}
+
+            <!-- Navigation -->
+            <div class="d-flex justify-content-between mb-4">
+                {% if prev_lesson %}
+                    <a href="{% url 'lessons:lesson_detail' course_slug=course.slug lesson_slug=prev_lesson.slug %}" class="btn btn-outline-primary">
+                        <i class="bi bi-arrow-left"></i> Previous Lesson
+                    </a>
+                {% else %}
+                    <span></span>
+                {% endif %}
+                
+                {% if is_enrolled %}
+                    <form method="post" action="{% url 'lessons:mark_complete' course_slug=course.slug lesson_slug=lesson.slug %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-check-circle"></i> Mark as Complete
+                        </button>
+                    </form>
+                {% endif %}
+                
+                {% if next_lesson %}
+                    <a href="{% url 'lessons:lesson_detail' course_slug=course.slug lesson_slug=next_lesson.slug %}" class="btn btn-primary">
+                        Next Lesson <i class="bi bi-arrow-right"></i>
+                    </a>
+                {% else %}
+                    <span></span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

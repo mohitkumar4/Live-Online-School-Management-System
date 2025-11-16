@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Take Quiz - {{ attempt.quiz.title }}{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row">
+        <div class="col-md-10 offset-md-1">
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h2 class="mb-0">{{ attempt.quiz.title }}</h2>
+                </div>
+                <div class="card-body">
+                    <p>{{ attempt.quiz.description }}</p>
+                    {% if attempt.quiz.time_limit_minutes > 0 %}
+                        <p><strong>Time Limit:</strong> {{ attempt.quiz.time_limit_minutes }} minutes</p>
+                    {% endif %}
+                    <p><strong>Passing Score:</strong> {{ attempt.quiz.passing_score }}%</p>
+                </div>
+            </div>
+
+            <form method="post">
+                {% csrf_token %}
+                {% for question in questions %}
+                    <div class="quiz-question">
+                        <h4 class="mb-3">
+                            Question {{ forloop.counter }} ({{ question.points }} point{{ question.points|pluralize }})
+                        </h4>
+                        <p class="lead">{{ question.question_text }}</p>
+                        
+                        {% if question.question_type == 'multiple_choice' %}
+                            {% for choice in question.choices.all %}
+                                <div class="choice-option">
+                                    <input type="radio" name="question_{{ question.id }}" value="{{ choice.id }}" id="choice_{{ choice.id }}" required>
+                                    <label for="choice_{{ choice.id }}" class="ms-2">{{ choice.choice_text }}</label>
+                                </div>
+                            {% endfor %}
+                        {% elif question.question_type == 'true_false' %}
+                            {% for choice in question.choices.all %}
+                                <div class="choice-option">
+                                    <input type="radio" name="question_{{ question.id }}" value="{{ choice.id }}" id="choice_{{ choice.id }}" required>
+                                    <label for="choice_{{ choice.id }}" class="ms-2">{{ choice.choice_text }}</label>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                {% endfor %}
+                
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                    <button type="submit" class="btn btn-primary btn-lg">Submit Quiz</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

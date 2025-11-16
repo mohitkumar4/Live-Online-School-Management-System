@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Quiz Result - {{ attempt.quiz.title }}{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card shadow mb-4">
+                <div class="card-header bg-{% if attempt.passed %}success{% else %}danger{% endif %} text-white">
+                    <h2 class="mb-0">
+                        Quiz Result: {{ attempt.quiz.title }}
+                        {% if attempt.passed %}
+                            <span class="badge bg-light text-success">Passed!</span>
+                        {% else %}
+                            <span class="badge bg-light text-danger">Failed</span>
+                        {% endif %}
+                    </h2>
+                </div>
+                <div class="card-body text-center py-5">
+                    <h1 class="display-1 mb-3">{{ attempt.percentage }}%</h1>
+                    <p class="lead">Your Score: {{ attempt.score }} / {{ attempt.quiz.questions.count }}</p>
+                    <p class="lead">Passing Score: {{ attempt.quiz.passing_score }}%</p>
+                    {% if attempt.passed %}
+                        <div class="alert alert-success">
+                            <i class="bi bi-check-circle-fill"></i> Congratulations! You passed the quiz.
+                        </div>
+                    {% else %}
+                        <div class="alert alert-danger">
+                            <i class="bi bi-x-circle-fill"></i> You need {{ attempt.quiz.passing_score }}% to pass. Keep learning!
+                        </div>
+                    {% endif %}
+                    <div class="mt-4">
+                        <a href="{% url 'courses:course_detail' attempt.quiz.course.slug %}" class="btn btn-primary me-2">Back to Course</a>
+                        <a href="{% url 'quizzes:start_quiz' attempt.quiz.id %}" class="btn btn-outline-primary">Retake Quiz</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Review Answers -->
+            <div class="card shadow">
+                <div class="card-header">
+                    <h3>Review Your Answers</h3>
+                </div>
+                <div class="card-body">
+                    {% for answer in answers %}
+                        <div class="quiz-question mb-4">
+                            <h5>Question {{ forloop.counter }}</h5>
+                            <p class="lead">{{ answer.question.question_text }}</p>
+                            
+                            {% if answer.question.question_type == 'multiple_choice' or answer.question.question_type == 'true_false' %}
+                                {% for choice in answer.question.choices.all %}
+                                    <div class="choice-option {% if choice.is_correct %}bg-success bg-opacity-25{% endif %} {% if answer.selected_choice == choice %}border-primary{% endif %}">
+                                        {% if choice.is_correct %}
+                                            <i class="bi bi-check-circle-fill text-success"></i>
+                                        {% elif answer.selected_choice == choice and not choice.is_correct %}
+                                            <i class="bi bi-x-circle-fill text-danger"></i>
+                                        {% endif %}
+                                        {{ choice.choice_text }}
+                                        {% if choice.is_correct %}
+                                            <span class="badge bg-success">Correct Answer</span>
+                                        {% endif %}
+                                    </div>
+                                {% endfor %}
+                            {% endif %}
+                            
+                            <div class="mt-3">
+                                {% if answer.is_correct %}
+                                    <span class="badge bg-success">Correct - {{ answer.points_earned }} point{{ answer.points_earned|pluralize }}</span>
+                                {% else %}
+                                    <span class="badge bg-danger">Incorrect - 0 points</span>
+                                {% endif %}
+                            </div>
+                            
+                            {% if answer.question.explanation %}
+                                <div class="alert alert-info mt-3">
+                                    <strong>Explanation:</strong> {{ answer.question.explanation }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

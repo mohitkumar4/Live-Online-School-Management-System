@@ -1,0 +1,411 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}My Profile - Live School{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <!-- Profile Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="me-4">
+                            {% if user.profile_picture %}
+                                <img src="{{ user.profile_picture.url }}" alt="{{ user.username }}" 
+                                     class="rounded-circle" style="width: 100px; height: 100px; object-fit: cover;">
+                            {% else %}
+                                <div class="rounded-circle bg-primary d-inline-flex align-items-center justify-content-center" 
+                                     style="width: 100px; height: 100px;">
+                                    <i class="bi bi-person-circle text-white" style="font-size: 60px;"></i>
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="flex-grow-1">
+                            <h2 class="mb-1">{{ user.get_full_name|default:user.username }}</h2>
+                            <p class="text-muted mb-2">@{{ user.username }}</p>
+                            <span class="badge bg-{% if user.role == 'student' %}success{% elif user.role == 'instructor' %}primary{% else %}danger{% endif %} fs-6 px-3 py-2">
+                                <i class="bi bi-{% if user.role == 'student' %}person{% elif user.role == 'instructor' %}mortarboard{% else %}shield-check{% endif %}"></i> 
+                                {{ user.get_role_display }}
+                            </span>
+                            {% if user.bio %}
+                                <p class="mt-3 mb-0">{{ user.bio|truncatewords:30 }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Statistics Sidebar -->
+        <div class="col-lg-4 mb-4">
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="bi bi-bar-chart"></i> Statistics</h5>
+                </div>
+                <div class="card-body">
+                    {% if user.is_student %}
+                        <!-- Student Stats -->
+                        <div class="row g-3 text-center">
+                            <div class="col-6">
+                                <div class="stat-card p-3">
+                                    <div class="stat-number text-primary">{{ stats.total_enrollments }}</div>
+                                    <div class="stat-label">Enrolled</div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="stat-card p-3">
+                                    <div class="stat-number text-success">{{ stats.completed_courses }}</div>
+                                    <div class="stat-label">Completed</div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="stat-card p-3">
+                                    <div class="stat-number text-warning">{{ stats.certificates }}</div>
+                                    <div class="stat-label">Certificates</div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="stat-card p-3">
+                                    <div class="stat-number text-info">{{ stats.total_lessons_completed }}</div>
+                                    <div class="stat-label">Lessons</div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="stat-card p-3">
+                                    <div class="stat-number text-secondary">{{ stats.total_quizzes_taken }}</div>
+                                    <div class="stat-label">Quizzes</div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="stat-card p-3">
+                                    <div class="stat-number text-success">{{ stats.quizzes_passed }}</div>
+                                    <div class="stat-label">Passed</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Recent Enrollments -->
+                        {% if stats.recent_enrollments %}
+                            <hr>
+                            <h6 class="mb-3">Recent Enrollments</h6>
+                            {% for enrollment in stats.recent_enrollments %}
+                                <div class="mb-2">
+                                    <small><a href="{% url 'courses:course_detail' enrollment.course.slug %}">{{ enrollment.course.title|truncatewords:5 }}</a></small>
+                                    <div class="progress" style="height: 5px;">
+                                        <div class="progress-bar" style="width: {{ enrollment.progress_percentage }}%"></div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                        
+                    {% elif user.is_instructor %}
+                        <!-- Instructor Stats -->
+                        <div class="row g-3 text-center">
+                            <div class="col-6">
+                                <div class="stat-card p-3">
+                                    <div class="stat-number text-primary">{{ stats.total_courses }}</div>
+                                    <div class="stat-label">Total Courses</div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="stat-card p-3">
+                                    <div class="stat-number text-success">{{ stats.published_courses }}</div>
+                                    <div class="stat-label">Published</div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="stat-card p-3">
+                                    <div class="stat-number text-info">{{ stats.total_enrollments }}</div>
+                                    <div class="stat-label">Enrollments</div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="stat-card p-3">
+                                    <div class="stat-number text-warning">{{ stats.total_students }}</div>
+                                    <div class="stat-label">Students</div>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <div class="stat-card p-3">
+                                    <div class="stat-number text-success">{{ stats.avg_rating }}</div>
+                                    <div class="stat-label">Avg Rating ({{ stats.total_reviews }} reviews)</div>
+                                    <div>
+                                        {% for i in "12345" %}
+                                            {% if forloop.counter <= stats.avg_rating|floatformat:0|add:0 %}
+                                                <i class="bi bi-star-fill text-warning"></i>
+                                            {% else %}
+                                                <i class="bi bi-star text-warning"></i>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Recent Courses -->
+                        {% if stats.recent_courses %}
+                            <hr>
+                            <h6 class="mb-3">Recent Courses</h6>
+                            {% for course in stats.recent_courses %}
+                                <div class="mb-2">
+                                    <small><a href="{% url 'courses:course_detail' course.slug %}">{{ course.title|truncatewords:5 }}</a></small>
+                                    <div><small class="text-muted">{{ course.total_enrollments }} enrolled</small></div>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                        
+                    {% else %}
+                        <!-- Admin Stats -->
+                        <div class="row g-3 text-center">
+                            <div class="col-6">
+                                <div class="stat-card p-3">
+                                    <div class="stat-number text-primary">{{ stats.total_courses }}</div>
+                                    <div class="stat-label">Total Courses</div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="stat-card p-3">
+                                    <div class="stat-number text-success">{{ stats.published_courses }}</div>
+                                    <div class="stat-label">Published</div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="stat-card p-3">
+                                    <div class="stat-number text-info">{{ stats.total_users }}</div>
+                                    <div class="stat-label">Total Users</div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="stat-card p-3">
+                                    <div class="stat-number text-warning">{{ stats.total_instructors }}</div>
+                                    <div class="stat-label">Instructors</div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="stat-card p-3">
+                                    <div class="stat-number text-secondary">{{ stats.total_students }}</div>
+                                    <div class="stat-label">Students</div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="stat-card p-3">
+                                    <div class="stat-number text-danger">{{ stats.total_enrollments }}</div>
+                                    <div class="stat-label">Enrollments</div>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <div class="stat-card p-3">
+                                    <div class="stat-number text-success">{{ stats.total_certificates }}</div>
+                                    <div class="stat-label">Certificates Issued</div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Profile Info Card -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-info-circle"></i> Profile Information</h5>
+                </div>
+                <div class="card-body">
+                    {% if user.email %}
+                        <p><strong>Email:</strong> {{ user.email }}</p>
+                    {% endif %}
+                    {% if user.phone_number %}
+                        <p><strong>Phone:</strong> {{ user.phone_number }}</p>
+                    {% endif %}
+                    {% if user.date_of_birth %}
+                        <p><strong>Date of Birth:</strong> {{ user.date_of_birth|date:"M d, Y" }}</p>
+                    {% endif %}
+                    {% if user.city or user.country %}
+                        <p><strong>Location:</strong> {% if user.city %}{{ user.city }}, {% endif %}{{ user.country|default:"" }}</p>
+                    {% endif %}
+                    {% if profile.occupation %}
+                        <p><strong>Occupation:</strong> {{ profile.occupation }}</p>
+                    {% endif %}
+                    {% if profile.education_level %}
+                        <p><strong>Education:</strong> {{ profile.education_level }}</p>
+                    {% endif %}
+                    {% if profile.website %}
+                        <p><strong>Website:</strong> <a href="{{ profile.website }}" target="_blank">{{ profile.website|truncatechars:30 }}</a></p>
+                    {% endif %}
+                    <p><strong>Member since:</strong> {{ user.date_joined|date:"M Y" }}</p>
+                    
+                    <!-- Social Links -->
+                    {% if profile.linkedin_profile or profile.twitter_profile or profile.github_profile %}
+                        <hr>
+                        <div class="d-flex gap-2">
+                            {% if profile.linkedin_profile %}
+                                <a href="{{ profile.linkedin_profile }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-linkedin"></i> LinkedIn
+                                </a>
+                            {% endif %}
+                            {% if profile.twitter_profile %}
+                                <a href="{{ profile.twitter_profile }}" target="_blank" class="btn btn-sm btn-outline-info">
+                                    <i class="bi bi-twitter"></i> Twitter
+                                </a>
+                            {% endif %}
+                            {% if profile.github_profile %}
+                                <a href="{{ profile.github_profile }}" target="_blank" class="btn btn-sm btn-outline-dark">
+                                    <i class="bi bi-github"></i> GitHub
+                                </a>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content - Edit Profile -->
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="bi bi-pencil-square"></i> Edit Profile</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="nav nav-tabs mb-4" id="profileTab" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="basic-tab" data-bs-toggle="tab" data-bs-target="#basic" type="button" role="tab">
+                                Basic Information
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="additional-tab" data-bs-toggle="tab" data-bs-target="#additional" type="button" role="tab">
+                                Additional Information
+                            </button>
+                        </li>
+                    </ul>
+
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <div class="tab-content" id="profileTabContent">
+                            <!-- Basic Information Tab -->
+                            <div class="tab-pane fade show active" id="basic" role="tabpanel">
+                                <div class="mb-3">
+                                    <label class="form-label">Profile Picture</label>
+                                    {{ u_form.profile_picture }}
+                                    {% if user.profile_picture %}
+                                        <small class="text-muted d-block mt-1">Current: <a href="{{ user.profile_picture.url }}" target="_blank">View</a></small>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Username <span class="text-danger">*</span></label>
+                                        {{ u_form.username }}
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Email <span class="text-danger">*</span></label>
+                                        {{ u_form.email }}
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">First Name</label>
+                                        {{ u_form.first_name }}
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Last Name</label>
+                                        {{ u_form.last_name }}
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">Bio</label>
+                                    {{ u_form.bio }}
+                                    <small class="text-muted">Tell others about yourself</small>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Phone Number</label>
+                                        {{ u_form.phone_number }}
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Date of Birth</label>
+                                        {{ u_form.date_of_birth }}
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">Address</label>
+                                    {{ u_form.address }}
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">City</label>
+                                        {{ u_form.city }}
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Country</label>
+                                        {{ u_form.country }}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Additional Information Tab -->
+                            <div class="tab-pane fade" id="additional" role="tabpanel">
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Occupation</label>
+                                        {{ p_form.occupation }}
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Education Level</label>
+                                        {{ p_form.education_level }}
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">Interests</label>
+                                    {{ p_form.interests }}
+                                    <small class="text-muted">Your hobbies and interests</small>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">Personal Website</label>
+                                    {{ p_form.website }}
+                                    <small class="text-muted">Your personal or professional website</small>
+                                </div>
+                                
+                                <h6 class="mt-4 mb-3">Social Media Profiles</h6>
+                                
+                                <div class="row">
+                                    <div class="col-md-4 mb-3">
+                                        <label class="form-label">LinkedIn Profile</label>
+                                        {{ p_form.linkedin_profile }}
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <label class="form-label">Twitter Profile</label>
+                                        {{ p_form.twitter_profile }}
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <label class="form-label">GitHub Profile</label>
+                                        {{ p_form.github_profile }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <hr>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <a href="{% url 'dashboard:index' %}" class="btn btn-secondary">Cancel</a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-circle"></i> Update Profile
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

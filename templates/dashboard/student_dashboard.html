@@ -1,0 +1,103 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dashboard - Live School{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <h1 class="mb-4">My Dashboard</h1>
+    
+    <!-- Statistics Cards -->
+    <div class="row g-4 mb-5">
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-number">{{ total_enrollments }}</div>
+                <div class="stat-label">Enrolled Courses</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-number">{{ completed_courses }}</div>
+                <div class="stat-label">Completed Courses</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-number">{{ certificates }}</div>
+                <div class="stat-label">Certificates</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-number">{{ total_lessons_completed }}</div>
+                <div class="stat-label">Lessons Completed</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- My Courses -->
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h3>My Enrolled Courses</h3>
+            <a href="{% url 'dashboard:my_courses' %}" class="btn btn-sm btn-primary">View All</a>
+        </div>
+        <div class="card-body">
+            {% if enrollments %}
+                <div class="row g-4">
+                    {% for enrollment in enrollments %}
+                        <div class="col-md-6 col-lg-4">
+                            <div class="card course-card h-100">
+                                {% if enrollment.course.thumbnail %}
+                                    <img src="{{ enrollment.course.thumbnail.url }}" class="card-img-top course-card-img" alt="{{ enrollment.course.title }}">
+                                {% endif %}
+                                <div class="card-body">
+                                    <h5 class="card-title">{{ enrollment.course.title }}</h5>
+                                    <div class="progress progress-custom mb-3">
+                                        <div class="progress-bar progress-bar-custom" role="progressbar" 
+                                             style="width: {{ enrollment.progress_percentage }}%">
+                                            {{ enrollment.progress_percentage }}%
+                                        </div>
+                                    </div>
+                                    <a href="{% url 'courses:course_detail' enrollment.course.slug %}" class="btn btn-primary btn-sm">Continue Learning</a>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="text-muted">You haven't enrolled in any courses yet. <a href="{% url 'courses:course_list' %}">Browse courses</a></p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Recent Progress -->
+    <div class="card">
+        <div class="card-header">
+            <h3>Recent Activity</h3>
+        </div>
+        <div class="card-body">
+            {% if recent_progress %}
+                <ul class="list-group list-group-flush">
+                    {% for progress in recent_progress %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>{{ progress.lesson.title }}</strong>
+                                <br>
+                                <small class="text-muted">{{ progress.lesson.course.title }}</small>
+                            </div>
+                            {% if progress.is_completed %}
+                                <span class="badge bg-success">Completed</span>
+                            {% else %}
+                                <span class="badge bg-warning">In Progress</span>
+                            {% endif %}
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p class="text-muted">No recent activity.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+

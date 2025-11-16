@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Quiz - {{ quiz.title }}{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h2 class="mb-0">{{ quiz.title }}</h2>
+                </div>
+                <div class="card-body">
+                    <p class="lead">{{ quiz.description }}</p>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <p><strong>Course:</strong> <a href="{% url 'courses:course_detail' quiz.course.slug %}">{{ quiz.course.title }}</a></p>
+                            <p><strong>Questions:</strong> {{ quiz.questions.count }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            {% if quiz.time_limit_minutes > 0 %}
+                                <p><strong>Time Limit:</strong> {{ quiz.time_limit_minutes }} minutes</p>
+                            {% else %}
+                                <p><strong>Time Limit:</strong> No limit</p>
+                            {% endif %}
+                            <p><strong>Passing Score:</strong> {{ quiz.passing_score }}%</p>
+                        </div>
+                    </div>
+                    
+                    {% if previous_attempts %}
+                        <div class="alert alert-info">
+                            <h5>Previous Attempts</h5>
+                            <ul class="list-unstyled mb-0">
+                                {% for attempt in previous_attempts %}
+                                    <li>
+                                        Score: {{ attempt.percentage }}% 
+                                        ({{ attempt.started_at|date:"M d, Y" }})
+                                        {% if attempt.passed %}
+                                            <span class="badge bg-success">Passed</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">Failed</span>
+                                        {% endif %}
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    {% endif %}
+                    
+                    <a href="{% url 'quizzes:start_quiz' quiz.id %}" class="btn btn-primary btn-lg w-100">
+                        Start Quiz
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
